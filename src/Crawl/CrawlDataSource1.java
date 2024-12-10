@@ -10,21 +10,19 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class Data {
+public class CrawlDataSource1 {
 
     private String directoryPath;
     private String csvFileName;
     private String baseUrl;
     private int productId;
-    private int price;
-    private int discountPercentage;
 
-    public Data(int productId,String baseUrl, String directoryPath) {
+    public CrawlDataSource1(int productId, String baseUrl, String directoryPath) {
         this.directoryPath = directoryPath;
         this.baseUrl = baseUrl;
         this.productId = productId;
         String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        this.csvFileName = "products_" + timestamp + ".csv";
+        this.csvFileName = "products_1" + timestamp + ".csv";
     }
 
     public String getCsvFileName() {
@@ -44,7 +42,7 @@ public class Data {
     }
 
     public boolean drawData() {
-
+        String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
         String imageUrl = "";
         String url = this.getBaseUrl() + "/collections/gong-kinh";
 
@@ -53,32 +51,31 @@ public class Data {
         if (!directory.exists()) {
             boolean created = directory.mkdirs();
             if (created) {
-                System.out.println("tạo thư mục thành công: " + directoryPath);
+                System.out.println("Tạo thư mục thành công: " + directoryPath);
             } else {
-                System.out.println("tạo thư mục không thành công: " + directoryPath);
+                System.out.println("Tạo thư mục không thành công: " + directoryPath);
                 return false;
             }
         } else {
-            System.out.println("thư mục: " + directoryPath);
+            System.out.println("Thư mục: " + directoryPath);
         }
-
 
         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
                 new FileOutputStream(directoryPath + "\\" + this.getCsvFileName()), StandardCharsets.UTF_8))) {
             writer.write("\uFEFF");
 
-            writer.write("productId,imageURL,productURL,productTitle,price,discount percentage,brand,material,style,warranty,colors\n");
+            writer.write("productId,date,imageURL,productURL,productTitle,price,discountPercentage,brand,material,style,warranty,colors\n");
 
             Document doc = Jsoup.connect(url).get();
             Element page = doc.select("a[class=page-node]").last();
             String lastPageText = page.ownText();
             int lastPageNumber = Integer.parseInt(lastPageText);
-//            int halfLastPageNumber = lastPageNumber / 2;
 
             for (int i = 1; i <= 3; i++) {
                 Document pageDoc = Jsoup.connect(this.getBaseUrl() + "/collections/gong-kinh?page=" + i).get();
                 Elements products = pageDoc.select("div.product-block");
                 System.out.println(i);
+
                 for (Element product : products) {
                     Element firstSource = product.select("picture source").first();
                     if (firstSource != null) {
@@ -93,35 +90,32 @@ public class Data {
                     String productUrl = this.getBaseUrl() + productHref;
                     String[] productDetails = scrapeProductDetails(productUrl);
 
+                    // Convert tất cả dữ liệu về String
                     String productTitle = escapeCSV(productDetails[0]);
-                    if(!cleanPrice(productDetails[1]).equals("")){
-                        price = Integer.parseInt(cleanPrice(productDetails[1]));
-                    }
-
-                    if (!cleanPrice(productDetails[2]).equals("")){
-                        discountPercentage = Integer.parseInt(cleanPrice(productDetails[2]));
-                    }
-
+                    String price = String.valueOf(cleanPrice(productDetails[1]));  // Chuẩn hóa giá
+                    String discountPercentage = String.valueOf(cleanPrice(productDetails[2]));
                     String brand = escapeCSV(productDetails[3]);
                     String material = escapeCSV(productDetails[4]);
                     String style = escapeCSV(productDetails[5]);
                     String warranty = escapeCSV(productDetails[6]);
                     String colors = escapeCSV(productDetails[7]);
 
-                    writer.write(String.format("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
-                            this.getProductId(), imageUrl, productUrl, productTitle, price, discountPercentage , brand, material, style, warranty, colors));
+                    writer.write(String.format("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                            String.valueOf(this.getProductId()), date, imageUrl, productUrl, productTitle, price,
+                            discountPercentage, brand, material, style, warranty, colors));
                 }
             }
-            System.out.println("lưu dữ liệu:  " + directoryPath + "\\" + csvFileName + " thành công!");
+            System.out.println("Lưu dữ liệu: " + directoryPath + "\\" + csvFileName + " thành công!");
             return true;
         } catch (IOException e) {
-            System.err.println("không ghi vào csv: " + e.getMessage());
+            System.err.println("Không ghi vào CSV: " + e.getMessage());
             return false;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
+
 
     private static String[] scrapeProductDetails(String productUrl) throws IOException {
         Document productDoc = Jsoup.connect(productUrl).get();
@@ -176,12 +170,11 @@ public class Data {
 
     private static String cleanPrice(String price) {
         if (price == null || price.trim().isEmpty()) {
-            return "";
+            return "0"; // Trả về "0" nếu không có giá trị để tránh lỗi
         }
-
-        return price.replaceAll("[^\\d.]", "").trim();
+        // Loại bỏ các ký tự không phải số (bao gồm dấu phẩy và ký hiệu tiền tệ)
+        return price.replaceAll("[^\\d]", "").trim();
     }
-
 
 
     public long getFileSize() {
@@ -202,6 +195,5 @@ public class Data {
         return rowCount;
     }
 
-
-
 }
+

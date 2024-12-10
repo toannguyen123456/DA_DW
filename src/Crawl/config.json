@@ -1,0 +1,19 @@
+{
+  "databases": {
+    "control": {
+      "url": "jdbc:sqlserver://DESKTOP-6PSGDFH\\SQLEXPRESS:1433;databaseName=Control;encrypt=false;trustServerCertificate=true;",
+      "user": "sa",
+      "password": "123"
+    },
+    "staging": {
+      "url": "jdbc:sqlserver://DESKTOP-6PSGDFH\\SQLEXPRESS:1433;databaseName=Staging;encrypt=false;trustServerCertificate=true;",
+      "user": "sa",
+      "password": "123"
+    },
+    "dw": {
+      "url": "jdbc:sqlserver://DESKTOP-6PSGDFH\\SQLEXPRESS:1433;databaseName=DW;encrypt=false;trustServerCertificate=true;",
+      "user": "sa",
+      "password": "123"
+    }
+  }
+}
